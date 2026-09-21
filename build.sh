@@ -13,6 +13,20 @@ swiftc Sources/*.swift \
   -O
 
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+
+# The .icns is generated from Resources/icon.png rather than committed, so a
+# fresh clone builds without it.
+if [ ! -f Resources/AppIcon.icns ] || [ Resources/icon.png -nt Resources/AppIcon.icns ]; then
+  ICONSET="$(mktemp -d)/AppIcon.iconset"
+  mkdir -p "$ICONSET"
+  for size in 16 32 128 256 512; do
+    sips -z $size $size Resources/icon.png --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
+    sips -z $((size * 2)) $((size * 2)) Resources/icon.png \
+      --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
+  done
+  iconutil -c icns "$ICONSET" -o Resources/AppIcon.icns
+  rm -rf "$(dirname "$ICONSET")"
+fi
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 # A stable signing identity, not ad-hoc. macOS ties Accessibility (and every
 # other TCC) grant to code identity, and `--sign -` mints a new one on every
