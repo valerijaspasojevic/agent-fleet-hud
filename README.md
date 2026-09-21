@@ -407,6 +407,40 @@ characters of the message, so failures can be diagnosed. That is message
 content on disk in plain text — delete the file or the directory if you would
 rather not keep it.
 
+## Known limits
+
+These are constraints of what the tools publish locally, not things waiting to
+be fixed, and it is better to read them here than discover them:
+
+- **Cursor cannot be aimed at one agent.** `Open` raises Cursor's existing
+  window; it cannot select the agent you clicked, and a message goes to
+  whatever chat is focused. Cursor's own deeplink is used when an agent id
+  happens to be recorded locally, which is uncommon — see the Cursor section.
+- **Cursor cannot show "needs you".** An agent waiting on your answer runs
+  nothing locally, so its worker honestly reports idle. That state lives on
+  Cursor's servers.
+- **Codex shows no turn status**, only a usage window — and that reading is
+  only as fresh as the last time Codex wrote one, which is why its age is
+  shown next to it.
+- **iTerm2 support is untested.** It is written from iTerm's scripting
+  dictionary and falls back safely, but iTerm was not installed on the machine
+  this was built on.
+- **Interactive Claude sessions cannot be driven unattended.** Auto-continue
+  and scheduled messages only use routes that do not involve typing at a
+  window, so they cover Codex and background (`claude --bg`) sessions.
+
+## Tests
+
+```sh
+./test.sh
+```
+
+Needs only the Swift toolchain, same as the build. Most assertions encode
+something that was once wrong: the usage-window formula is checked against a
+reset Claude Code actually recorded, and there are guards for a send firing
+twice from one keypress, a resume loop repeating every poll, and unattended
+keystrokes landing in the wrong window.
+
 ## Build and run
 
 ```sh

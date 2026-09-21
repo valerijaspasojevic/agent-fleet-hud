@@ -24,6 +24,11 @@ final class AutoPilot {
     }
 
     private var records: [String: Record] = [:]
+    /// The reset we last fired for, per session. Without this, AUTO re-arms a
+    /// blocked agent the instant it disarms — the blocked reading only
+    /// refreshes when the agent next writes, so "still blocked, reset already
+    /// passed" stays true and the message goes again on every poll.
+    private var lastFiredReset: [String: Date] = [:]
     /// What to send when a window rolls over, per session. Opt-in per row on
     /// purpose: a blocked agent may be blocked on work you deliberately
     /// abandoned, and quota should not be spent restarting it unless you said
@@ -77,6 +82,7 @@ final class AutoPilot {
         let live = Set(agents.compactMap(\.sessionId))
         records = records.filter { live.contains($0.key) }
         armed = armed.filter { live.contains($0.key) }
+        lastFiredReset = lastFiredReset.filter { live.contains($0.key) }
 
         if autoResume {
             // Whatever is blocked and reachable gets queued, so the row shows
@@ -84,6 +90,8 @@ final class AutoPilot {
             for agent in agents where canAutoResume(agent) {
                 guard let session = agent.sessionId, let resets = agent.limitResetsAt else { continue }
                 guard armed[session] == nil else { continue }
+                // Already resumed this window: wait for a genuinely newer one.
+                if let fired = lastFiredReset[session], fired >= resets { continue }
                 armed[session] = Scheduled(at: resets, message: Self.defaultMessage)
             }
         }
@@ -117,6 +125,7 @@ final class AutoPilot {
             }
             let result = sender(scheduled.message, agent)
             armed[session] = nil
+            lastFiredReset[session] = scheduled.at
             records[session] = Record(lastSent: Date())
             return result.hasPrefix("Sent")
                 ? "Window reset — sent \"\(scheduled.message)\" to \(agent.name)"
