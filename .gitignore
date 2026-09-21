@@ -1,0 +1,5 @@
+# Built app bundle and the generated icon set
+build/
+Resources/AppIcon.icns
+
+.DS_Store
