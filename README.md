@@ -2,6 +2,10 @@
 
 A notch-resident HUD for every AI coding agent running on this Mac.
 
+![The panel, showing sample agents](docs/screenshot.png)
+
+*Rendered from the real panel with sample agents — `./make-screenshot.sh`.*
+
 Collapsed, it's a small black tab hanging under the notch with live counts:
 red = blocked by the usage limit, blue = needs your input, green = working,
 amber = idle and waiting on you, slate = up but we cannot tell. It appears

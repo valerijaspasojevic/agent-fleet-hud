@@ -223,6 +223,11 @@ struct Counter: View {
 
 struct Panel: View {
     @ObservedObject var model: FleetModel
+    /// Lays the rows out statically and draws the composer field as plain
+    /// text. `ImageRenderer` renders neither a `ScrollView`'s content nor a
+    /// `TextField`, so this is what lets the README image be the real panel
+    /// rather than a mockup. Never set by the app.
+    var preview = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -236,16 +241,20 @@ struct Panel: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 24)
             } else {
-                ScrollView(.vertical) {
-                    VStack(spacing: 2) {
-                        ForEach(model.agents) { agent in
-                            AgentRow(model: model, agent: agent)
-                        }
+                let rows = VStack(spacing: 2) {
+                    ForEach(model.agents) { agent in
+                        AgentRow(model: model, agent: agent)
                     }
-                    .padding(.vertical, 6)
                 }
-                .scrollIndicators(.never)
-                .frame(maxHeight: CGFloat(model.maxRows) * Metrics.rowHeight + 12)
+                .padding(.vertical, 6)
+
+                if preview {
+                    rows
+                } else {
+                    ScrollView(.vertical) { rows }
+                        .scrollIndicators(.never)
+                        .frame(maxHeight: CGFloat(model.maxRows) * Metrics.rowHeight + 12)
+                }
             }
 
             if let target = model.selectedRow {
@@ -387,14 +396,24 @@ struct Panel: View {
             }
 
             HStack(spacing: 8) {
-                TextField("Message \(model.selected?.name ?? "an agent")…", text: $model.draft)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.07)))
-                    .onSubmit { send(model.draft) }
+                if preview {
+                    Text("Message \(model.selected?.name ?? "an agent")…")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.4))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.07)))
+                } else {
+                    TextField("Message \(model.selected?.name ?? "an agent")…", text: $model.draft)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.07)))
+                        .onSubmit { send(model.draft) }
+                }
 
                 // A blocked agent cannot receive anything now, so Send *is*
                 // Schedule — same button, same return key, label says which.
