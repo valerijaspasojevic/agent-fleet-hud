@@ -1,6 +1,11 @@
-# Agent Fleet
+# Agent Fleet HUD
 
-A notch-resident HUD for every AI coding agent running on this Mac.
+A notch-resident HUD for the AI coding agents **already running** on your Mac.
+
+It does not run, spawn or orchestrate agents. You start them however you
+normally do — `claude`, `codex`, Cursor — and this watches them: which is
+working, which is waiting on an answer, which is out of usage window and when
+it comes back. You can message one without leaving what you are doing.
 
 ![The panel, showing sample agents](docs/screenshot.png)
 
