@@ -260,19 +260,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model.expanded = true
             layout()
         } else {
-            guard !model.pinned else { return }
-            // Keyboard focus means you are mid-interaction — typing a message,
-            // or with a row selected. The mouse wandering off the panel is not
-            // a reason to collapse it and throw that away.
-            guard !panel.isKeyWindow else { return }
-            model.expanded = false
-            model.select(nil)
-            // Let the collapse animation finish before shrinking the window.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) { [weak self] in
-                guard let self, !self.model.expanded else { return }
-                self.layout()
-            }
+            collapseIfIdle(pointerInside: false)
         }
+    }
+
+    /// True only while the user is actually typing here. `isKeyWindow` on its
+    /// own is not enough: a non-activating panel keeps that status after you
+    /// click into another app, which is what left the panel open for good.
+    private var holdsKeyboard: Bool { panel.isKeyWindow && NSApp.isActive }
+
+    private func collapseIfIdle(pointerInside: Bool) {
+        guard FleetModel.shouldCollapse(expanded: model.expanded,
+                                        pinned: model.pinned,
+                                        pointerInside: pointerInside,
+                                        holdsKeyboard: holdsKeyboard) else { return }
+        model.expanded = false
+        model.select(nil)
+        // Let the collapse animation finish before shrinking the window.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) { [weak self] in
+            guard let self, !self.model.expanded else { return }
+            self.layout()
+        }
+    }
+
+    /// The pointer, in the panel's own coordinate space.
+    private var pointerIsOverPanel: Bool {
+        panel.frame.contains(NSEvent.mouseLocation)
     }
 
     /// FLEET_DEMO=1 shows a sample fleet covering every state, so the colours
@@ -326,6 +339,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // a fleet of idle workers does not.
                 let lively = found.contains { $0.state == .busy || $0.state == .asking }
                 self.schedulePoll(lively ? 3 : 15)
+
+                // mouseExited is not guaranteed — switching Spaces, a fast
+                // exit, or the window resizing under the pointer all lose it.
+                // This closes the panel that those cases leave open.
+                self.collapseIfIdle(pointerInside: self.pointerIsOverPanel)
 
                 // Cheap, and it can change while the app runs — the point is
                 // that the panel stops claiming it will type when it cannot.

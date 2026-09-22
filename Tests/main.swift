@@ -315,6 +315,32 @@ check("a missing flag yields nil", Discovery.flagValue("cmd --a b", "--zzz") == 
 check("a home path is abbreviated",
       Discovery.abbreviate(Discovery.home.appendingPathComponent("x").path) == "~/x")
 
+
+// MARK: - Collapsing
+
+section("collapsing")
+
+check("the panel closes when the pointer leaves",
+      FleetModel.shouldCollapse(expanded: true, pinned: false,
+                                pointerInside: false, holdsKeyboard: false))
+check("it stays open while the pointer is over it",
+      !FleetModel.shouldCollapse(expanded: true, pinned: false,
+                                 pointerInside: true, holdsKeyboard: false))
+check("it stays open while pinned",
+      !FleetModel.shouldCollapse(expanded: true, pinned: true,
+                                 pointerInside: false, holdsKeyboard: false))
+check("it stays open while you are typing in it",
+      !FleetModel.shouldCollapse(expanded: true, pinned: false,
+                                 pointerInside: false, holdsKeyboard: true))
+// The bug: a non-activating panel keeps isKeyWindow after you click away, so
+// treating that as "typing" left the panel open for good.
+check("clicking away from the app closes it even though it was the key window",
+      FleetModel.shouldCollapse(expanded: true, pinned: false,
+                                pointerInside: false, holdsKeyboard: false))
+check("an already-closed panel is left alone",
+      !FleetModel.shouldCollapse(expanded: false, pinned: false,
+                                 pointerInside: false, holdsKeyboard: false))
+
 // MARK: - Result
 
 print("\n\(passed) passed, \(failed) failed")

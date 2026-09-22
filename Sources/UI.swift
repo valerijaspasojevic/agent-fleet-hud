@@ -78,6 +78,20 @@ final class FleetModel: ObservableObject {
         onHeightChange?()
     }
 
+    /// Whether the panel should close, as a pure decision so the hover handler
+    /// and the poll watchdog cannot disagree.
+    ///
+    /// `holdsKeyboard` must mean "the user is typing here *now*". A
+    /// non-activating panel stays the key window of its own app even after you
+    /// click into another app, so keying on `isKeyWindow` alone left the panel
+    /// stuck open forever once it had been clicked.
+    static func shouldCollapse(expanded: Bool,
+                               pinned: Bool,
+                               pointerInside: Bool,
+                               holdsKeyboard: Bool) -> Bool {
+        expanded && !pinned && !pointerInside && !holdsKeyboard
+    }
+
     func flash(_ message: String) {
         toast = message
         let token = message
