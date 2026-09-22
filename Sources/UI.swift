@@ -162,6 +162,9 @@ struct NotchRoot: View {
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .animation(.spring(response: 0.32, dampingFraction: 0.82), value: model.expanded)
+        // Belt and braces with the window's NSAppearance: the panel is dark
+        // whatever the system is doing.
+        .environment(\.colorScheme, .dark)
     }
 }
 

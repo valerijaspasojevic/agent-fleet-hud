@@ -90,6 +90,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        // The panel is always dark, so pin the appearance instead of following
+        // the system. Any control or text that falls back to a default colour
+        // — Color.primary and friends — resolves against NSAppearance, so in
+        // light mode those came out black on a dark panel during the day.
+        NSApp.appearance = NSAppearance(named: .darkAqua)
         measureScreen()
         buildPanel()
 
@@ -183,6 +188,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                            styleMask: [.borderless, .nonactivatingPanel],
                            backing: .buffered,
                            defer: false)
+        panel.appearance = NSAppearance(named: .darkAqua)
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false

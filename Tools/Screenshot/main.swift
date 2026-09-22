@@ -64,7 +64,7 @@ func render() {
     }
     .padding(24)
     .background(Color(red: 0.05, green: 0.05, blue: 0.07))
-    .environment(\.colorScheme, .dark)
+    .environment(\.colorScheme, ProcessInfo.processInfo.environment["LIGHT"] == "1" ? .light : .dark)
 
     let renderer = ImageRenderer(content: view)
     renderer.scale = 2
@@ -75,7 +75,9 @@ func render() {
         print("render failed")
         exit(1)
     }
-    let out = URL(fileURLWithPath: "docs/screenshot.png")
+    let name = ProcessInfo.processInfo.environment["LIGHT"] == "1"
+        ? "/tmp/panel-light.png" : "docs/screenshot.png"
+    let out = URL(fileURLWithPath: name)
     try? FileManager.default.createDirectory(at: out.deletingLastPathComponent(),
                                             withIntermediateDirectories: true)
     try? png.write(to: out)
